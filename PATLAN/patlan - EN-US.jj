@@ -1,0 +1,919 @@
+/* Version 3.0
+   - added function to deal value and number
+     of direct defenses on a square
+*/
+options {
+  LOOKAHEAD = 1;
+  CHOICE_AMBIGUITY_CHECK = 2;
+  OTHER_AMBIGUITY_CHECK = 1;
+  STATIC = false;
+  DEBUG_PARSER = false;
+  DEBUG_LOOKAHEAD = false;
+  DEBUG_TOKEN_MANAGER = false;
+  ERROR_REPORTING = true;
+  JAVA_UNICODE_ESCAPE = false;
+  UNICODE_INPUT = false;
+  IGNORE_CASE = true;
+  USER_TOKEN_MANAGER = false;
+  USER_CHAR_STREAM = false;
+  BUILD_PARSER = true;
+  BUILD_TOKEN_MANAGER = true;
+  SANITY_CHECK = true;
+  FORCE_LA_CHECK = false;
+  OUTPUT_DIRECTORY = "G:\\Documentos\\NetBeansProjects\\PatLanParser";
+}
+
+PARSER_BEGIN(PATLANParser) 
+
+import java.util.HashMap;
+import br.edu.utfpr.stratvision.patlan.ScenarioAction.PieceStatus;
+
+public class PATLANParser {
+
+  public class TS {
+     String key;
+     int category;
+     String parameters = "";
+  }
+  
+  public Pattern pattern;
+  public HashMap<String, TS> ST = new HashMap();
+  public String leftActor;
+  public ScenarioAction action; 
+  
+  public static final int _ACTOR = 0;
+  public static final int _FUNCTION = 1;
+  private PieceStatus actorStatus;
+
+  private boolean progMoves = false; // the post conditions just can exist if there are predicted moves that apply to the action 
+  
+  private ScenarioAction.PieceOwner owner;
+  private boolean ORClauseForm = false;
+      
+  public static void main(String args[]) throws ParseException 
+  {
+    try
+    {
+       PATLANParser parser = new PATLANParser(System.in);
+       parser.getPatterns();
+       System.out.println("Everything is ok! :)");
+    }
+    catch (ParseException e) 
+    {
+      System.out.println("Syntax error: " + e.getMessage());
+    }
+  }
+   // verifies if the pieceType passed as parameters to the MOVESOF function belongs to the player or to the opponent
+
+  public boolean isMyPiece(String pieceType)
+  {
+      return Character.isUpperCase(pieceType.charAt(0));
+  }
+  
+}
+
+PARSER_END(PATLANParser)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+/* Reserved words */
+
+TOKEN :
+{
+   <PATTERN : "PATTERN" > |
+   <DESCRIPTION : "DESCRIPTION" > |
+   <WEIGHT : "WEIGHT" > |
+   <ACTORS : "ACTORS" > |
+   <PIECESET : "SETOFPIECES"> |
+   <SCENARIO : "SCENARIO" > |
+   <TACTICS : "TACTICS" | "MOVES" > |
+   <CONDITION: "PRECONDITION" > |
+   <POSTCONDITION: "POSTCONDITION" > |
+   <AUTHOR: "AUTHOR" > |
+   
+   /* predefined clauses and functions */
+   <WHITE: "WHITE" > |
+   <BLACK: "BLACK" > |
+   <SQUARECOLOR: "SQUARECOLOROF" > |
+   <EXISTSINFILE: "EXISTSINFILE" > |
+   <EXISTSINRANK: "EXISTSINRANK" > |
+   <FILEOF: "FILEOF" > |
+   <RANKOF: "RANKOF" > |
+   <VALUEOF: "VALUEOF"  > |
+   <ONEDGE: "ONEDGE" > |
+   <ONCORNER: "ONCORNER" > |
+   <TYPEOF: "TYPEOF" > |
+   <SENTRY: "SENTRY" > |
+   <RAM: "RAM" > |
+   <MAXDISTANCE: "DISTANCIAMAX" | "MAXDISTANCE" > |
+   <MINDISTANCE: "DISTANCIAMIN" | "MINDISTANCE" > |
+   <RANKDISTANCE: "RANKDISTANCE" | "LINEDISTANCE" > |
+   <FILEDISTANCE: "FILEDISTANCE" | "COLDISTANCE" > |
+   <MANDISTANCE: "MANHATTANDISTANCE" > |
+   <SQUARERULE: "INTHESQUARE" | "SQUARERULE" > |
+   
+   <MYDEFENSES: "MYDEFENSES" > |
+   <YOURDEFENSES: "YOURDEFENSES" > |
+   <DEFENSES: "DEFENSES" > |
+   <MYDEFENSESVALUE: "MYDEFENSESVALUE" > |
+   <YOURDEFENSESVALUE: "YOURDEFENSESVALUE" > |
+   <DEFENSESVALUE: "DEFENSESVALUE" |
+   
+   <RELATIVEVALUE: "RELATIVEVALUEOF" > |
+   <MYDIRECTDEFENSES: "MYDIRECTDEFENSES" > |
+   <YOURDIRECTDEFENSES: "YOURDIRECTDEFENSES" > |
+   <DIRECTDEFENSES: "DIRECTDEFENSES" > |
+   <MYRELATIVEDEFENSESVALUE: "MYRELATIVEDEFENSESVALUE" > |
+   <YOURRELATIVEDEFENSESVALUE: "YOURRELATIVEDEFENSESVALUE" > |
+   <RELATIVEDEFENSESVALUE: "RELATIVEDEFENSESVALUE" > |
+   <MYDIRECTDEFENSESVALUE: "MYDIRECTDEFENSESVALUE" > |
+   <YOURDIRECTDEFENSES: "YOURDIRDEFENSESVALUE" > |
+   <DIRECTDEFENSESVALUE: "DIRECTDEFENSESVALUE" > |
+   
+   /* returns the number of valid moves of an actor or piece type */
+   <MOVESOF: "MOVESOF" >  |
+   /* returns the number of safety moves of an actor or piece type */
+   <SAFEMOVESOF: "SAFEMOVESOF" >  |
+   // returns an int > 0 if there is a safety path between the king and the piece/square
+   <KINGPATHTO : "KINGPATHTO">  |
+   // returns true if there is an instance of another pattern in the same position
+   <EXISTPATTERN : "EXISTPATTERN">  |
+   // true if the kings are in perfect opposition 
+   <KINGOPPOSITION : "KINGOPPOSITION" > |
+   // true if no pawn of the player can move
+   <BLOCKEDPAWNS: "BLOCKEDPAWNS" > 
+}
+
+TOKEN :
+{
+  < KING: "KING" | "K" > |
+  < QUEEN: "QUEEN" | "Q" > |
+  < ROOK: "ROOK" | "R" > |
+  < BISHOP: "BISHOP" | "B" > |
+  < KNIGHT: "KNIGHT" | "N" > |
+  < PAWN: "PAWN" | "P" > |
+  < OWNER: "ME" | "OPPONENT" > |
+  < WILDCARD: "F" | "f" | "S" | "s" > |
+  < OP_AND : "AND" > |
+  < OP_OR  : "OR" > |
+  < FALSE  : "FALSE" > |
+  < TRUE : "TRUE" > |
+  < DIMENSION: ["a"-"h"] > |
+  < SET: ["K","Q","R","B","N","P","k","q","r","b","n","p"] > |
+    
+  < OP_ATTACK : "ATTACK" >  |
+  < OP_IATTACK: "ITATTACK" > | 
+  < OP_DEFENSE: "DEFENDS" > |
+  < OP_IDEFENSE: "IDEFENSE" > | 
+  < OP_MOVE: "MOVE" > | 
+  < OP_BLOCKS: "BLOCKS" >  |
+  < OP_RIGHT: "RIGHTSIDE" > | 
+  < OP_LEFT: "LEFTSIDE" > | 
+  < OP_UPPER: "TOPSIDE" > | 
+  < OP_BOTTOM: "BOTTOMSIDE" > | 
+  < OP_SOUTHEAST: "SOUTHEAST" > | 
+  < OP_NORTHWEST: "NORTHWEST" > |
+  < OP_NORTHEAST: "NORTHEAST" > | 
+  < OP_SOUTHWEST: "SOUTHWEST" > | 
+  < OP_PATTACK: "PATTACK" > | 
+  < OP_PDEFENSE: "PDEFENSE" > |
+  < OP_CHECKMATE: "CHECKMATE" > |
+  < OP_NOT: "NOT" >
+                   
+/*  < ID: ["a"-"z","A"-"Z","_"] ( ["a"-"z","A"-"Z","0"-"9","_"] )* > */
+}
+
+TOKEN :
+{
+  < #SIGNAL : "-" | "+" >
+|
+  < UINT: ["0"-"9"] (["0"-"9"])* >
+|
+  < FLOAT:
+       (<SIGNAL>)?(["0"-"9"])+ "." (["0"-"9"])*
+  >
+|
+  < TEXT:
+      "\""
+      (   (~["\"","\\","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )*
+      "\""
+  >
+}
+
+/* IDENTIFIERS */
+
+/** Root production. */
+void getPatterns() :
+{}
+{
+  (Pattern())*<EOF>
+}
+
+void Pattern() :
+{
+    Token t;
+    String s;
+}
+{
+    /* pattern object must be initialized before invoke the parser */
+   <PATTERN> t = <TEXT> { pattern.setName(t.image.substring(1, t.image.length()-1)); }    
+   <AUTHOR> <TEXT>
+   <DESCRIPTION> t = <TEXT> { pattern.setDescription(t.image); }
+   <WEIGHT> t = <FLOAT>     { pattern.setWeight(Double.parseDouble(t.image)); }
+   (<ACTORS> Actors() )?   
+   (<PIECESET> PieceSet() )? 
+   <SCENARIO> ScenarioActionPattern() 
+    { StringBuilder sb = new StringBuilder();
+      for(ScenarioAction f:pattern.getScenarioActions()) {
+         f.rightActorSource.addAll(f.rightActor);
+         sb.append(f.toString()).append("\n");
+      }
+      pattern.setScenarioActions(sb.toString());
+    }
+   (<TACTICS> Tactics() { progMoves = true; } )?
+   (<CONDITION> s = LogicExpression() {pattern.setPreConditionToJava(s);} )?
+   (<POSTCONDITION> s = LogicExpression() 
+      { if(!progMoves) { 
+           throw new ParseException("Error: tactical moves sequence not defined. ");
+        }
+        pattern.setPosConditionToJava(s); 
+      } 
+    )?
+   ";"
+}
+
+void Relation() :
+{}
+{
+   (<OP_ATTACK> {action.actionType = PatternActionType.ATTACKS; } | 
+    <OP_DEFENSE> {action.actionType = PatternActionType.DEFENDS;} | 
+    <OP_IATTACK> {action.actionType = PatternActionType.IATTACK;} | 
+    <OP_IDEFENSE> {action.actionType = PatternActionType.IDEFENSE;} | 
+    <OP_MOVE> {action.actionType = PatternActionType.MOVE;} | 
+    <OP_BLOCKS> {action.actionType = PatternActionType.BLOCKS;} |
+    <OP_UPPER> {action.actionType = PatternActionType.UPPERSIDE;} | 
+    <OP_RIGHT> {action.actionType = PatternActionType.RIGHTSIDE;} | 
+    <OP_LEFT> {action.actionType = PatternActionType.LEFTSIDE;} | 
+    <OP_BOTTOM> {action.actionType = PatternActionType.BOTTOMSIDE;} | 
+    <OP_SOUTHEAST> {action.actionType = PatternActionType.SE;} |
+    <OP_NORTHEAST> {action.actionType = PatternActionType.NO;} | 
+    <OP_NORTHWEST> {action.actionType = PatternActionType.NE;} | 
+    <OP_SOUTHWEST> {action.actionType = PatternActionType.SO;} | 
+    <OP_PATTACK> {action.actionType = PatternActionType.PATTACK;} | 
+    <OP_PDEFENSE> {action.actionType = PatternActionType.PDEFENSE;} |
+    <OP_CHECKMATE> {action.actionType = PatternActionType.CHECKMATE;} )
+}             
+
+void Actors() :
+{String t;}
+{
+   t = actor0()
+   {
+      TS simb = ST.get(t);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.key = t;
+         simb.category = _ACTOR;
+         ST.put(simb.key, simb);
+      }
+      action = new ScenarioAction();
+      action.orBegin = false;
+      action.orEnd = false;
+      action.leftActor = t;
+      action.leftStatus = actorStatus;
+      action.actionType = PatternActionType.DECLARATION;
+      if("FfSs".indexOf(t.substring(0,1)) >= 0) {
+          throw new ParseException("Wildcards cannot be declared as actors!\n" 
+                                  + "Line: " + token.beginLine");
+      }
+      if(Character.isUpperCase(t.charAt(0))) 
+      {
+         action.leftOwner = ScenarioAction.PieceOwner.ME;
+      } else if(Character.isLowerCase(t.charAt(0))) 
+      {
+         action.leftOwner = ScenarioAction.PieceOwner.OPPONENT;
+      }
+      pattern.getScenarioActions().add(action);
+   }
+   (","
+    t = actor0()
+       {
+          simb = ST.get(t);
+          if(simb == null) {
+             simb = new TS(); 
+             simb.key = t;
+             simb.category = _ACTOR;
+             ST.put(simb.key, simb);
+          }
+          action = new ScenarioAction();
+          action.orBegin = false;
+          action.orEnd = false;
+          action.leftActor = t;
+          action.leftStatus = actorStatus;
+          action.actionType = PatternActionType.DECLARATION;
+          if("FfSs".indexOf(t.substring(0,1)) >= 0) {
+              throw new ParseException("Wildcards cannot be declared as actors!\n" 
+                                  + "Line: " + token.beginLine);
+          }
+          if(Character.isUpperCase(t.charAt(0))) 
+          {
+             action.ownerEsq = ScenarioAction.PieceOwner.ME;
+          } else if(Character.isLowerCase(t.charAt(0))) 
+          {
+             action.ownerEsq = ScenarioAction.PieceOwner.OPPONENT;
+          }
+          pattern.getScenarioActions().add(action);
+       }
+   )*
+}
+
+void ScenarioActionFrame() :
+{String t;}
+{
+   t = actor1() 
+   {
+      TS simb = ST.get(t);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.key = t;
+         simb.category = _ACTOR;
+         simb.parameters = ORClauseForm?"OR":"";
+         ST.put(simb.key, simb);
+      }
+      action = new ScenarioAction();
+      action.orBegin = false;
+      action.orEnd = false;
+      action.leftActor = t;
+      action.leftStatus = actorStatus;
+      if(t.charAt(0) == 'S' || t.charAt(0) == 's') 
+      { 
+         throw new ParseException("Wildcard <" + t +"> cannot be alone or as the protagonist of the action (left side): \n" 
+                                  + "Line: " + token.beginLine);
+      } else if(Character.isUpperCase(t.charAt(0))) 
+      {
+         action.ownerEsq = ScenarioAction.PieceOwner.ME;
+      } else if(Character.isLowerCase(t.charAt(0))) 
+      {
+         action.ownerEsq = ScenarioAction.PieceOwner.OPPONENT;
+      }
+   }
+   ( Relation() {action.notRelation = false;} | <OP_NOT> Relation() {action.notRelation = true; })
+   actor2()
+   {
+     pattern.getScenarioActions().add(action);
+   } 
+}
+
+void ScenarioActionPattern() :
+{Token t;} 
+{
+  (
+    ScenarioActionFrame() 
+  |
+    "{" 
+      { ORClauseForm = true; }
+      (ScenarioActionFrame() { action.orBegin = true; })+ 
+    "}" 
+    {action.orEnd = true; ORClauseForm = false;} 
+  )+     
+}
+
+String PieceType() :
+{Token t;}
+{
+   t = <KING> { return isMyPiece(t.image)?"K":"k"; }| 
+   t = <QUEEN> { return isMyPiece(t.image)?"Q":"q"; }| 
+   t = <BISHOP> { return isMyPiece(t.image)?"B":"b"; }| 
+   t = <KNIGHT> { return isMyPiece(t.image)?"N":"n"; }| 
+   t = <ROOK> { return isMyPiece(t.image)?"R":"r"; }| 
+   t = <PAWN> { return isMyPiece(t.image)?"P":"p"; } 
+}
+
+String Piece() :
+{Token t;
+ String s;}
+{
+   t = <WILDCARD> { return t.image; } | s = PieceType() { return s; }
+}
+
+String actor0() :
+{ Token t1;
+  String s;
+}
+{
+  s = PieceType() t1 = <UINT> { actorStatus = PieceStatus.ANYONE; return s + t1.image; } 
+}
+
+String actor1() :
+{ Token t1;
+  String s;
+}
+{
+  LOOKAHEAD(2)
+  s = Piece() t1 = <UINT> { actorStatus = PieceStatus.ANYONE; return s + t1.image; } 
+| 
+  LOOKAHEAD(2)
+  "<" s = Piece() t1 = <UINT> ">" { actorStatus = PieceStatus.PROTECTED; return s + t1.image; } 
+|
+  LOOKAHEAD(2)
+  ">" s = Piece() t1 = <UINT> "<" { actorStatus = PieceStatus.UNPROTECTED; return s + t1.image; } 
+}
+
+void actor2() :
+{ Token t; 
+  String s; 
+  TS simb;
+}
+{ //relaçoes diretas
+   s = actor1() 
+   {
+      if(s.charAt(0) == 'S' || s.charAt(0) == 's') {
+        owner = ScenarioAction.PieceOwner.ANYONE;
+      } else if(Character.isUpperCase(s.charAt(0))) 
+      { 
+        owner = ScenarioAction.PieceOwner.ME;
+      } else
+      {
+        owner = ScenarioAction.PieceOwner.OPPONENT;
+      } 
+      if(action.actionType == PatternActionType.ATTACK && action.ownerEsq==owner) {
+         throw new ParseException("Pieces of the same player cannot attack each other." +
+                                  "\nLine: " + token.beginLine);
+      } else if(action.actionType == PatternActionType.ATTACK && owner == ScenarioAction.PieceOwner.ANYONE) {
+          throw new ParseException("A piece can't attack a wildcard actor, but it can defend." +
+                                  "\nLine: " + token.beginLine);
+      } else if(action.actionType == PatternActionType.DEFENDS && owner!=action.ownerEsq && owner != ScenarioAction.PieceOwner.ANYONE) {
+         throw new ParseException("Pieces of a player can't defend pieces of the opponent."
+                                  + "\nLine: " + token.beginLine);
+      } else if(action.actionType != PatternActionType.MOVE && 
+                action.actionType != PatternActionType.DEFENDS &&
+                action.actionType != PatternActionType.CHECKMATE &&
+                owner==ScenarioAction.PieceOwner.ANYONE) {
+         throw new ParseException("Invalid relational operator. Use the move or direct defense operator."
+                                  + "\nLine: " + token.beginLine);
+      } else if(!action.actionType.getDireta()) {
+          {if (true) throw new ParseException("Invalid relational operator. Use direct operators."
+                                  + "\u005cnLine: " + token.beginLine);}
+      } else {
+          boolean jaexiste = false;
+           for(int ix = 0; ix < action.figDir.size(); ix++) {
+              if (s.equals(action.figDir.get(ix))) {
+                  jaexiste = true; break;
+              }
+          }
+          if(s.equals(action.leftActor) || jaexiste) {
+              throw new ParseException("An actor can't act with itself!");
+          }
+      }
+      simb = ST.get(s);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.key = s;
+         simb.category = _ACTOR;
+         simb.parameters = ORClauseForm?"OR":"";
+         ST.put(simb.key, simb);
+      }
+      action.figDir.add(s);
+      action.sitDir.add(actorStatus);
+      if(Character.isUpperCase(s.charAt(0))) 
+      { 
+        owner = ScenarioAction.PieceOwner.ME;
+      } else
+      {
+        owner = ScenarioAction.PieceOwner.OPPONENT;
+      } 
+      action.ownerDir.add(owner);
+   }  
+| //indirect relations
+   "(" 
+   s = actor1() 
+   { 
+      simb = ST.get(s);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.key = s;
+         simb.category = _ACTOR;
+         simb.parameters = ORClauseForm?"OR":"";
+         ST.put(simb.key, simb);
+      }
+      action.figDir.add(s);
+      action.sitDir.add(actorStatus);
+      if(Character.isUpperCase(s.charAt(0))) { 
+         owner = ScenarioAction.PieceOwner.ME;
+      } else {
+         owner = ScenarioAction.PieceOwner.OPPONENT;
+      }      
+      action.ownerDir.add(owner);
+   } 
+   ("," 
+    s = actor1() 
+    {
+      simb = ST.get(s);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.key = s;
+         simb.category = _ACTOR;
+         simb.parameters = ORClauseForm?"OR":"";
+         ST.put(simb.key, simb);
+      }
+      action.figDir.add(s);
+      action.sitDir.add(actorStatus);
+      if(s.charAt(0) == 'S' || s.charAt(0) == 's') {
+         owner = ScenarioAction.PieceOwner.ANYONE;
+      } else 
+      if(Character.isUpperCase(s.charAt(0))) { 
+         owner = ScenarioAction.PieceOwner.ME;
+      } else {
+         owner = ScenarioAction.PieceOwner.OPPONENT;
+      }
+      action.ownerDir.add(owner);
+    })+
+    {    
+      if((action.actionType == PatternActionType.IATTACK ||
+          action.actionType == PatternActionType.PATTACK ||
+          action.actionType == PatternActionType.ATTACK) && 
+          (owner==action.ownerEsq || owner == ScenarioAction.PieceOwner.ANYONE)) {
+         throw new ParseException("Pieces of the same player cannot threat each other or wildcards of type S.\nLine: " + token.beginLine);
+      } else if((action.actionType == PatternActionType.IDEFENSE ||
+                 action.actionType == PatternActionType.PDEFENSE) && 
+                 owner != action.ownerEsq && 
+                 owner != ScenarioAction.PieceOwner.ANYONE ) {
+         throw new ParseException("The owner of the last piece of the action must be the same as the protagonist of the action or a wildcard S.\nLine: " + token.beginLine);
+      }  else if(action.actionType.getDireta()) {
+          {if (true) throw new ParseException("Invalid action operator! Use indirect actions operators.\nLine: " + token.beginLine);}
+      }
+    }    
+    ")"
+}
+
+void Tactics() :
+{String arg1 = "", arg2 = "";
+}
+{
+   (
+       arg1 = actor1() 
+       {
+          TS simb = ST.get(arg1);
+          if(simb == null) {
+             throw new ParseException("The actor [" + arg1 + "] was not declared!");
+          } 
+       }
+       ","
+       arg2 = actor1() 
+       {
+          simb = ST.get(arg2);
+          if(simb == null) {
+             throw new ParseException("The actor [" + arg2 + "] was not declared!");
+          } 
+          if(arg2.equals(arg1)) {
+              throw new ParseException("Move definition is incorrect! Cannot move to the same square.");
+          }
+          if(Character.toUpperCase(arg1.charAt(0)) == 'S') {
+             throw new ParseException("The first target of the move must be a piece in the set [FKQRNBP].");
+          }
+          if(Character.toUpperCase(arg2.charAt(0)) != 'S')
+            if((Character.isUpperCase(arg1.charAt(0)) &&
+                Character.isUpperCase(arg2.charAt(0))) ||
+               (Character.isLowerCase(arg1.charAt(0)) &&
+               Character.isLowerCase(arg2.charAt(0)))) {
+                  throw new ParseException("Move definition is incorrect! Cannot move over it's own piece.");
+            }
+          pattern.getTactics().add(arg1 + "," + arg2); //adiciona a tabela IL de movimentos
+       }
+   )+
+}
+
+String LogicExpression():
+{String s1 = "",s2 = "",s3 = "";}
+{
+  s1 = AndLogicExpression() ( <OP_OR> {s2 = " || "; } s3 = AndLogicExpression() {s1 += s2 + s3; } )* 
+  { return s1; }
+}
+
+String AndLogicExpression():
+{String s1 = "",s2 = "",s3 = "";}
+{
+   s1 = EqualExpression() ( <OP_AND> { s2 = " && "; } s3 = EqualExpression() {s1 += s2 + s3; } )*
+   { return s1; }
+}
+
+String EqualExpression():
+{String s1 = "",s3 = "";
+ Token s2 = null;
+}
+{
+  s1 = RelationalExpression() ( ( s2 = "=" | s2 = "!=" ) s3 = RelationalExpression() 
+                               {s1 += s2.image=="="?"==" + s3:s2.image + s3; } )*
+  { return s1;  }
+}
+
+String RelationalExpression():
+{String s1 = "",s3 = "";
+ Token s2 = null;
+}
+{
+  s1 = AddExpression() ( (s2 = "<" | s2 = ">" | s2 = "<=" | s2 = ">=" ) s3 = AddExpression()
+  { s1 += s2.image + s3; })*
+  { return s1; }
+}
+
+String AddExpression():
+{String s1 = "", s3 = "";
+ Token s2 = null;
+}
+{
+   s1 = MultExpression() ( ( s2 = "+" | s2 = "-" ) s3 = MultExpression() { s1 += s2.image + s3; } )* 
+   { return s1; }
+}
+
+String MultExpression():
+{String s1 = "",s3 = "";
+ Token s2 = null;
+}
+{
+  s1 = UnaryExpression() ( ( s2 = "*" | s2 = "/" | s2 = "%" ) s3 = UnaryExpression() 
+  { s1 += s2.image + s3; } )*
+  { 
+    return s1; 
+  }
+}
+
+String UnaryExpression():
+{ Token t1 = null; 
+  Token t = null;
+  String s1;
+}
+{
+  ( t1 = "+" | t1 = "-" )? ( t = <UINT> | t = <REAL>)
+  { if(t1==null) {return t.image; } else { return t1.image + t.image; } }
+ | t = <TRUE> 
+   { return "true"; }
+ | t = <FALSE>
+  { return "false"; }
+|
+   s1 = PreDefinedFunction()
+   {return s1; }
+|
+  "(" s1 = LogicExpression() ")"
+  { return "(" + s1 + ")"; }
+}
+
+/* Predefined functions */
+
+String PreDefinedFunction():
+{ String f = "", args = "";
+  Token arg;}
+  
+//----------------------------------------------------------------
+  
+{ // no parameters
+   (  <WHITE>              { f = "analisys.WHITE()"; } // bool
+    | <BLACK>               { f = "analisys.BLACK()"; }  // bool
+   ) 
+   
+//----------------------------------------------------------------
+   
+ | // one parameter ACTOR 
+  (  <FILEOF>                { f = "analisys.FILEOF"; } // UINT
+   | <RANKOF>                 { f = "analisys.RANKOF"; }  // UINT
+   | <ONEDGE>               { f = "analisys.ONEDGE"; }// BOOL
+   | <ONCORNER>               { f = "analisys.ONCORNER"; }// BOOL
+   | <MYDEFENSES>         { f = "analisys.MYDEFENSES"; } // UINT
+   | <YOURDEFENSES>           { f = "analisys.YOURDEFENSES"; }     // UINT
+   | <MYDEFENSESVALUE>    { f = "analisys.MYDEFENSESVALUE"; } // FLOAT
+   | <YOURDEFENSESVALUE>      { f = "analisys.YOURDEFENSESVALUE"; } // FLOAT
+   /* relative values of defenses according to the defending piece square */
+   | <RELATIVEVALUE>         { f = "analisys.RELATIVEVALUEOF"; } // FLOAT
+   | <MYDIRECTDEFENSES>      { f = "analisys.MYDIRECTDEFENSES"; } // UINT
+   | <YOURDIRECTDEFENSES>        { f = "analisys.YOURDIRECTDEFENSES"; }     // UINT
+   | <MYRELATIVEDEFENSESVALUE> { f = "analisys.MYRELATIVEDEFENSESVALUE"; } // FLOAT
+   | <YOURRELATIVEDEFENSESVALUE>   { f = "analisys.YOURRELATIVEDEFENSESVALUE"; } // FLOAT
+   | <MYDIRECTDEFENSESVALUE> { f = "analisys.MYDIRECTDEFENSESVALUE"; } // FLOAT
+   | <YOURDIRDEFENSESVALUE>   { f = "analisys.YOURDIRDEFENSESVALUE"; } // FLOAT
+   | <SENTRY>             { f = "analisys.SENTRY"; } // UINT
+   | <RAM>                { f = "analisys.RAM";}  // UINT
+  )"(" args = Args() ")"
+  { return f + "(\"" + args + "\")"; }
+
+//----------------------------------------------------------------  
+  
+ | //one parameter - owner/search player/verification
+    <BLOCKEDPAWNS> "(" arg = <OWNER> ")" 
+    { f = "analisys.ISPAWNSBLOCKED(\"" + arg.image + "\")"; 
+      return f; 
+    } // bool true if all pawns are blocked
+	
+//----------------------------------------------------------------
+
+ | //one parameter : piece or type of piece
+     <SQUARECOLOR>                { f = "analisys.SQUARECOLOROF"; } 
+       "(" (LOOKAHEAD(2) args = Args() | args = Piece()) ")" //UINT
+    { return f + "(\"" + args + "\")"; }
+ | 
+    <VALUEOF>                  { f = "analisys.VALUEOF"; }  // REAL
+    "(" (LOOKAHEAD(2) args = Args() | args = PieceType()) ")"
+    { return f + "(\"" + args + "\")"; }
+ |  
+    <MOVESOF>           { f = "analisys.MOVESOF"; } 
+       "(" (LOOKAHEAD(2) args = Args() | args = PieceType()) ")" //UINT
+    { return f + "(\"" + args + "\")"; }
+ |  
+    <SAFEMOVESOF>    { f = "analisys.SAFEMOVESOF"; } 
+      "(" (LOOKAHEAD(2) args = Args() | args = PieceType()) ")" // UINT
+    { return f + "(\"" + args + "\")"; } 
+
+//---------------------------------------------------------------	
+	
+ | //two parameters ACTOR and WHO
+	( <DEFENSES> { f = "analisys.DEFENSES";}                  | 
+	  <DEFENSESVALUE> { f = "analisys.DEFENSESVALUE";}        |
+	  <DIRECTDEFENSES> { f = "analisys.DIRECTDEFENSES"; }          |
+	  <DIRECTDEFENSESVALUE> { f = "analisys.DIRECTDEFENSESVALUE"; } |
+	  <RELATIVEDEFENSESVALUE> { f = "analisys.RELATIVEDEFENSESVALUE"; } |}
+	)
+	args = OwnerActorArgs()
+	{return f + args; }
+  
+//---------------------------------------------------------------
+ 
+ | //two parameters ACTOR and TYPE
+    <TYPEOF>                 { f = "analisys.TYPEOF"; } 
+	args = TypeArgs() // BOOL
+    { return f + args; }
+ | 
+    <EXISTSINFILE>         { f = "analisys.EXISTSINFILE"; } 
+	args = ExistsInFileArgs() 
+    { return f + args; } // BOOL
+ |
+    <EXISTSINRANK>          { f = "analisys.EXISTSINRANK"; } 
+	args = InRankArgs()
+    { return f + args; } // BOOL
+ | 
+    ( <KINGPATHTO> { f = "analisys.KINGPATHTO";   } // BOOL
+    | <KINGOPPOSITION>  { f = "analisys.KINGOPPOSITION";  } // bool
+    | <RANKDISTANCE> { f = "analisys.RANKDISTANCE"; } // UINT
+    | <FILEDISTANCE> { f = "analisys.FILEDISTANCE"; }
+    | <MANDISTANCE> { f = "analisys.MANDISTANCE"; }
+    | <MAXDISTANCE> { f = "analisys.MAXDISTANCE"; }
+    | <MINDISTANCE> { f = "analisys.MINDISTANCE"; }
+    | <SQUARERULE>   { f = "analisys.SQUARERULE";   } // BOOL
+    ) 
+    args = DistArgs() 
+    { return f + args; }
+  | <EXISTPATTERN> "(" args = PatternArgs() ")" 
+    { f = "analisys.EXISTPATTERN(\"" + args + "\")";
+      return f;
+    }
+}
+
+String PieceSet():
+{String t = "", s = "";}
+{
+  (s = PieceType() { pattern.getPieceSet().add(s.charAt(0)); t = t + s; } )+
+  {
+    if(pattern.getPieceSet().size() < 3) {
+          throw new ParseException("The exclusive set must have at least three pieces.");
+    }
+    return t;
+  }  
+}
+
+String PatternArgs():
+{ Token t;
+  Token d;
+}
+{
+   t = <TEXT>
+   ","
+   d = <OWNER>
+   {
+    pattern.setOpponnentRecursiveSearch(d.image.equals("OPONNENT"));
+    return t.image.substring(1,t.image.length()-1) + "," + d.image;
+   }
+}
+
+String Args():
+{ String s; }
+{
+   s = actor1() 
+   {
+      TS simb = ST.get(s);
+      if(simb == null) 
+      {
+         throw new ParseException("The actor [" + s + "] must be declared in the action scenario.");
+      }
+      return s;
+   }  
+}
+
+String OwnerActorArgs():
+{String arg1 = "", arg2 = "", arg3 = ""; 
+ Token t = null;}
+{
+   "(" 
+      arg1 = actor1()
+   "," 
+      t = <OWNER> { arg2 = t.image(); }c
+   ")" 
+   { return "(\"" + arg1 + "," + arg2 + "\")"; }
+}
+
+String ExistsInFileArgs():
+{String arg1 = "", arg2 = "", arg3 = ""; 
+ Token t = null;}
+{
+   "(" 
+      arg1 = Piece() 
+   "," 
+      ( 
+        t = <UINT> 
+        { arg2 = t.image; }
+      | 
+        <COLUNA> "(" arg3 = Args() ")" 
+        { arg2 = "analisys.FILEOF(" + arg3 + ")";} 
+      ) 
+   ")" 
+   { return "(\"" + arg1 + "," + arg2 + "\")"; }
+}
+
+String InRankArgs():
+{String arg1 = "", arg2 = "", arg3 = ""; 
+ Token t = null;}
+{
+   "(" 
+      arg1 = Piece() 
+   "," 
+      ( t = <UINT> 
+        { arg2 = t.image; }
+      | 
+        <LINHA> "(" arg3 = Args() ")" 
+        { arg2 = "analisys.RANKOF(" + arg3 + ")"; }
+      ) 
+   ")" 
+   {return "(\"" + arg1 + "," + arg2 + "\")"; }
+}
+
+String TypeArgs():
+{String arg1 = "", arg2 = "";}
+{
+   "(" 
+   arg1 = actor1() 
+   {
+      TS simb = ST.get(arg1);
+      if(simb == null) {
+         throw new ParseException("The actor [" + s + "] must be declared in the action scenario.");
+      } 
+   }
+   "," 
+   arg2 = PieceType() 
+   {
+      simb = ST.get(arg2);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.key = arg2;
+         simb.category = _FUNCTION;
+         ST.put(simb.key, simb);
+      }
+   }
+   ")" 
+   
+   {return "(\"" + arg1 + "," + arg2 + "\")"; }
+}
+
+String DistArgs():
+{String arg1 = "", arg2 = "";}
+{
+   "(" 
+   arg1 = actor1() 
+   {
+      TS simb = ST.get(arg1);
+      if(simb == null) {
+         throw new ParseException("The actor [" + s + "] must be declared in the action scenario.");
+      } 
+   }
+   "," 
+   arg2 = actor1() 
+   {
+      simb = ST.get(arg2);
+      if(simb == null) {
+         throw new ParseException("The actor [" + s + "] must be declared in the action scenario.");
+      } 
+   }
+   ")"
+   {return "(\"" + arg1 + "," + arg2 + "\")"; }
+}
+
+

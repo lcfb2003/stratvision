@@ -1,0 +1,216 @@
+FUNCAO COLUNADE
+  DESCRICAO "Retorna o número da coluna da peça instanciada no padrão"
+  RETORNA
+     INTEIRO DESCRICAO "Número da coluna da figura"
+  PARAMETROS
+     FIGURA FN DESCRICAO "Identificador da figura usada no formato do padrão" 
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO LINHADE
+  DESCRICAO "Retorna o número da linha da peça instanciada no padrão"
+  RETORNA
+     INTEIRO DESCRICAO "Número da linha da figura"
+  PARAMETROS
+     FIGURA FN DESCRICAO "Identificador da figura usada no formato do padrão" 
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO VALORDE
+  DESCRICAO "Retorna o valor heurístico da peça instanciada no padrão na etapa em execução"
+  RETORNA
+     REAL DESCRICAO "Valor heurístico da peça instanciada para a figura"
+  PARAMETROS
+     FIGURA FN DESCRICAO "Identificador da figura usada no formato do padrão" 
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO NABORDA
+  DESCRICAO "Verifica se a peça instanciada no padrão está numa borda do tabuleiro"
+  RETORNA
+     LOGICO DESCRICAO "VERDADEIRO OU FALSO"
+  PARAMETROS
+     FIGURA FN DESCRICAO "Identificador da figura usada no formato do padrão" 
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO NOCANTO
+  DESCRICAO "Verifica se a peça instanciada no padrão está em um dos cantos do tabuleiro"
+  RETORNA
+     LOGICO DESCRICAO "VERDADEIRO OU FALSO"
+  PARAMETROS
+     FIGURA FN DESCRICAO "Identificador da figura usada no formato do padrão" 
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO CORCASA
+  DESCRICAO "Verifica a cor da casa da peça instanciada no padrão"
+  RETORNA
+     INTEIRO DESCRICAO "0 - BRANCAS 1 - PRETAS"
+  PARAMETROS
+     FIGURA FN DESCRICAO "Identificador da figura usada no formato do padrão" 
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO SENTINELA
+  DESCRICAO "Verifica se existem peões sentinelas nas colunas adjacentes da peça instanciada"
+  RETORNA
+     LOGICO DESCRICAO "VERDADEIRO OU FALSO"
+  PARAMETROS
+     FIGURA FN DESCRICAO "Identificador da figura usada no formato do padrão" 
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO TIPODE
+  DESCRICAO "Verifica se a peça instanciada no padrão é do tipo especificado"
+  RETORNA
+     LOGICO DESCRICAO "VERDADEIRO OU FALSO"
+  PARAMETROS
+     FIGURA FN DESCRICAO "Identificador da figura usada no formato do padrão" 
+	  TIPOPECA TP DESCRIÇÃO "Tipo da peça (REI,DAMA,TORRE,BISPO,CAVALO,PEAO)"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO TIPODE
+  DESCRICAO "Verifica se a peça instanciada no padrão é do tipo especificado"
+  RETORNA
+     LOGICO DESCRICAO "VERDADEIRO OU FALSO"
+  PARAMETROS
+     FIGURA FN DESCRICAO "Identificador da figura usada no formato do padrão" 
+	  TIPOPECA TP DESCRICAO "Tipo da peça (REI,DAMA,TORRE,BISPO,CAVALO,PEAO)"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO EXISTENALINHA
+  DESCRICAO "Verifica se um tipo de peça existe na linha especificada"
+  RETORNA
+     LOGICO DESCRICAO "VERDADEIRO OU FALSO"
+  PARAMETROS
+	  TIPOPECA TP DESCRICAO "Tipo da peça (REI,DAMA,TORRE,BISPO,CAVALO,PEAO)"
+	  INTEIRO LINHA DESCRICAO "Número da coluna"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO EXISTENACOLUNA
+  DESCRICAO "Verifica se um tipo de peça existe na coluna especificada"
+  RETORNA
+     LOGICO DESCRICAO "VERDADEIRO OU FALSO"
+  PARAMETROS
+	  TIPOPECA TP DESCRICAO "Tipo da peça (REI,DAMA,TORRE,BISPO,CAVALO,PEAO)"
+	  INTEIRO COLUNA DESCRICAO "Número da linha"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO MOVIMENTOSDE
+  DESCRICAO "Verifica o número de movimentos válidos dos tipos de peças"
+  RETORNA
+     INTEIRO DESCRICAO "Número de movimentos válidos"
+  PARAMETROS
+	  TIPOPECA TP DESCRICAO "Tipo da peça (REI,DAMA,TORRE,BISPO,CAVALO,PEAO)"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO MOVIMENTOSDE
+  DESCRICAO "Verifica o número de movimentos válidos da peça instanciada no padrão"
+  RETORNA
+     INTEIRO DESCRICAO "Número de movimentos válidos"
+  PARAMETROS
+	  FIGURA FN DESCRICAO "Identificador da figura usada no formato do padrão"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO DISTANCIALIN
+  DESCRICAO "Distância em linhas entre duas peças instanciadas no padrão"
+  RETORNA
+     INTEIRO DESCRICAO "Distância em linhas"
+  PARAMETROS
+	  FIGURA FN1 DESCRICAO "Identificador da figura usada no formato do padrão"
+	  FIGURA FN2 DESCRICAO "Identificador da figura usada no formato do padrão"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO DISTANCIACOL
+  DESCRICAO "Distância em colunas entre duas peças instanciadas no padrão"
+  RETORNA
+     INTEIRO DESCRICAO "Distância em colunas"
+  PARAMETROS
+	  FIGURA FN1 DESCRICAO "Identificador da figura usada no formato do padrão"
+	  FIGURA FN2 DESCRICAO "Identificador da figura usada no formato do padrão"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO DISTANCIAMAX
+  DESCRICAO "Maior distância (coluna ou linha) entre duas peças instanciadas no padrão"
+  RETORNA
+     INTEIRO DESCRICAO "Maior distância"
+  PARAMETROS
+	  FIGURA FN1 DESCRICAO "Identificador da figura usada no formato do padrão"
+	  FIGURA FN2 DESCRICAO "Identificador da figura usada no formato do padrão"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO DISTANCIAMIN
+  DESCRICAO "Menor distância (coluna ou linha) entre duas peças instanciadas no padrão"
+  RETORNA
+     INTEIRO DESCRICAO "Menor distância"
+  PARAMETROS
+	  FIGURA FN1 DESCRICAO "Identificador da figura usada no formato do padrão"
+	  FIGURA FN2 DESCRICAO "Identificador da figura usada no formato do padrão"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO DISTANCIAMAN
+  DESCRICAO "Distância Manhattan entre duas peças instanciadas no padrão"
+  RETORNA
+     INTEIRO DESCRICAO "Distância Manhattan"
+  PARAMETROS
+	  FIGURA FN1 DESCRICAO "Identificador da figura usada no formato do padrão"
+	  FIGURA FN2 DESCRICAO "Identificador da figura usada no formato do padrão"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO NOQUADRADO
+  DESCRICAO "Checa se duas peças estão no mesmo quadrado"
+  RETORNA
+     LOGICO DESCRICAO "Regra do quadrado"
+  PARAMETROS
+	  FIGURA FN1 DESCRICAO "Identificador da figura usada no formato do padrão"
+	  FIGURA FN2 DESCRICAO "Identificador da figura usada no formato do padrão"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO VALORMINHASDEFESAS
+  DESCRICAO "Soma do valor heurístico de todas as peças minhas que defendem uma casa"
+  RETORNA
+     INTEIRO DESCRICAO "Soma"
+  PARAMETROS
+	  FIGURA FN1 DESCRICAO "Identificador da figura usada no formato do padrão"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO VALORSUASDEFESAS
+  DESCRICAO "Soma do valor heurístico de todas as peças suas que defendem uma casa"
+  RETORNA
+     INTEIRO DESCRICAO "Soma"
+  PARAMETROS
+	  FIGURA FN1 DESCRICAO "Identificador da figura usada no formato do padrão"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO MINHASDEFESAS
+  DESCRICAO "Número de peças minhas que defendem uma casa"
+  RETORNA
+     INTEIRO DESCRICAO "Número de peças"
+  PARAMETROS
+	  FIGURA FN1 DESCRICAO "Identificador da figura usada no formato do padrão"
+  COMANDOS
+FIM FUNCAO
+
+FUNCAO SUASDEFESAS
+  DESCRICAO "Número de peças suas que defendem uma casa"
+  RETORNA
+     INTEIRO DESCRICAO "Número de peças"
+  PARAMETROS
+	  FIGURA FN1 DESCRICAO "Identificador da figura usada no formato do padrão"
+  COMANDOS
+FIM FUNCAO

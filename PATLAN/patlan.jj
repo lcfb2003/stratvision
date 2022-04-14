@@ -1,0 +1,937 @@
+/* Versão 5
+   - tradução para inglês dos tokens
+*/
+options {
+  LOOKAHEAD = 1;
+  CHOICE_AMBIGUITY_CHECK = 2;
+  OTHER_AMBIGUITY_CHECK = 1;
+  STATIC = false;
+  DEBUG_PARSER = false;
+  DEBUG_LOOKAHEAD = false;
+  DEBUG_TOKEN_MANAGER = false;
+  ERROR_REPORTING = true;
+  JAVA_UNICODE_ESCAPE = false;
+  UNICODE_INPUT = false;
+  IGNORE_CASE = false;
+  USER_TOKEN_MANAGER = false;
+  USER_CHAR_STREAM = false;
+  BUILD_PARSER = true;
+  BUILD_TOKEN_MANAGER = true;
+  SANITY_CHECK = true;
+  FORCE_LA_CHECK = false;
+  OUTPUT_DIRECTORY = ".\\";
+}
+
+PARSER_BEGIN(LRPRGParser) 
+
+import java.util.HashMap;
+import br.ufpr.inf.heuchess.representacao.estrategia.ScenarioShape.PieceStatus;
+
+public class LRPRGParser {
+
+  public class TS {
+     String Key;
+     int Category;
+     String Parameters = "";
+	 boolean NotAction = false;
+  }
+  
+  public Pattern pattern;
+  public HashMap<String, TS> ST = new HashMap();
+  public String letfToken;
+  public ScenarioShape scenario; /* elemento da tabela intermediária */
+  
+  public static final int _FIGURE = 0;
+  public static final int _FUNCTION = 1;
+  private PieceStatus figStatus;
+
+  private boolean progMoves = false; // as pós condições só podem existir se os movimentos previstos/esperados 
+                                        // no padrão forem especificados;
+  
+  private ScenarioShape.PieceOwner owner;
+  private boolean ORClauseForm = false;
+      
+  public static void main(String args[]) throws ParseException 
+  {
+    try
+    {
+       LRPRGParser parser = new LRPRGParser(System.in);
+       parser.Patterns();
+       System.out.println("Tudo certo! :)");
+    }
+    catch (ParseException e) 
+    {
+      System.out.println("Erro de sintaxe: " + e.getMessage());
+    }
+  }
+
+   // verifica se o pieceType passado na função movimentosde são do jogador que busca o padrão ou são do oponente
+  public boolean myPiece(String pieceType)
+  {
+      return Character.isUpperCase(pieceType.charAt(0));
+  }
+  
+}
+
+PARSER_END(LRPRGParser)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+/* Palavras reservadas */
+
+TOKEN :
+{
+	<PATTERN : "PADRAO" | "PATTERN" > |
+	<DESCRIPTION : "DESCRICAO" | "DESCRIPTION" > |
+	<WEIGHT : "PESO" | "WEIGHT" > |
+	<ACTORS : "ATORES" | "ACTORS" > |
+	<PIECESET:  "SETOFPIECES" | "CONJUNTODEPECAS" > |
+	<FORMAT :  "FORMAT" | "FORMATO" > |
+	<SCENARIO : "CENARIO" | "SCENARIO" > |
+	<MOVES : "TATICAS" | "TACTICALS" > |
+	<PRECONDITION: "PRECONDICAO" | "PRECONDITION" > |
+	<POSTCONDITION: "POSCONDICAO" | "POSTCONDITION" > |
+	<AUTHOR: "AUTOR" | "AUTHOR" > |
+
+	/* Funções predefinidas */
+	<WHITE: "WHITE" | "BRANCAS" > |
+	<BLACK: "BLACK" | "PRETAS" > |
+	<SQUARECOLOR: "CORCASADE" | "SQUARECOLOROF" > |
+	<ISINFILE: "EXISTINFILE" | "EXISTENACOLUNA" > |
+	<INSINRANK: "EXISTINRANK" | "EXISTENALINHA" > |
+	<FILE: "FILEOF" | "COLUNADE" > |
+	<RANK: "RANKOF"  | "LINHADE" > |
+	<VALUE: "VALORDE" | "VALUEOF"  > |
+	<ONEDGE: "NABORDA" | "ONEDGE" | "ONBORDER"  > |
+	<ONCORNER: "NOCANTO" | "ONCORNER" > |
+	<TYPEOF: "TIPODE" | "TYPEOF" > |
+	<SENTRY: "SENTRY" | "SENTINELA" > | 
+	<RAM: "RAM" | "BLOQUEADOR" > | 
+	<MAXDISTANCE: "MAXDISTANCE" | "DISTANCIAMAX" > | 
+	<MINDISTANCE: "MINDISTANCE" | "DISTANCIAMIN" > |
+	<RANKDISTANCE: "DISTANCIALIN" | "LINEDISTANCE" | "RANKDISTANCE" > |
+	<FILEDISTANCE: "COLDISTANCE" | "DISTANCIACOL" | "FILEDISTANCE" > |
+	<MANDISTANCE: "DISTANCIAMAN" | "MANHATTANDISTANCE" > |
+	<SQUARERULE: "NOQUADRADO" | "SQUARERULE" | "INTHESQUARE" > |
+	<SQUAREOWNER: "DONODACASA" | "SQUAREOWNER" > |
+
+	<MYDEFENSES: "MYDEFENSES" | "MINHASDEFESAS" > | 
+	<YOURDEFENSES: "SUASDEFESAS" | "YOURDEFENSES" > |
+	<DEFENSES: "DEFESAS" | "DEFENSES" > |
+	<MYDEFENSESVALUE: "MYDEFENSESVALUE" | "VALORMINHASDEFESAS" > |
+	<YOURDEFENSESVALUE: "VALORSUASDEFESAS" | "YOURDEFENSESVALUE" > |
+	<DEFENSESVALUE: "VALORDEFESAS" | "DEFENSESVALUE" > |
+	<RELATIVEVALUEOF: "VALORRELATIVODE" | "RELATIVEVALUEOF" > |
+	<MYDIRDEFENSES: "MYDIRDEFENSES" | "MINHASDEFESASDIR" > | 
+	<YOURDIRDEFENSES: "SUASDEFESASDIR" | "YOURDIRDEFENSES" > |
+	<DIRECTDEFENSES: "DEFESASDIRETAS" | "DIRECTDEFENSES" > |
+	<MYRELDEFENSESVALUE: "MYRELDEFENSESVALUE" | "VALORMINHASDEFESASREL" > | 
+	<YOURRELDEFENSESVALUE: "VALORSUASDEFESASREL" | "YOURRELDEFENSESVALUE" > |
+	<RELDFENSESVALUE: "VALORDEFESASREL" | "RELDEFENSESVALUE" > |
+	<MYDIRDEFENSESVALUE: "MYDIRDEFENSESVALUE" | "VALORMINHASDEFESASDIR" > | 
+	<YOURDIRDEFENSESVALUE: "VALORSUASDEFESASDIR" | "YOURDIRDEFENSESVALUE" > |
+	<DIRDEFENSESVALUE: "VALORDEFESASDIR" | "DIRECTDEFENSESVALUE" > |
+	<WEDGES: "INTRUSOSENTRE" | "WEDGESBETWEEN" > |
+    <PIECESDEFENDING: "PECASDEF" | "PIECESDEF" > |
+
+	/* retorna o número de movimentos possíveis da peça atuando no padrão ou de um tipo especificado */
+	<MOVESOF: "MOVESOF" | "MOVIMENTOSDE" > | 
+	/* retorna o número de movimentos seguros possíveis da peça atuando no padrão ou de um tipo especificado */
+	<SAFEMOVESOF: "SAFEMOVESOF" | "MOVIMENTOSSEGUROSDE" > | 
+	// retorna um valor inteiro > 0 se existe um caminho seguro do rei até a peça/quadrado
+	<KINGPATH : "KINGPATHTO" | "CAMINHODOREI" > | 
+	// retorna verdadeiro se existe uma instância de um outro padrão na posição
+	<CHECKPATTERN : "EXISTEPADRAO" | "EXISTPATTERN">  |
+	// determina se os reis estão em perfeita oposição e retorna lógico (verdadeiro ou falso)
+	<KINGOPPOSITION : "OPOSICAO" | "KINGOPPOSITION" > |
+	// retorna verdadeiro se nenhum peão do jogador especificado como parâmetro pode se mover
+	<BLOCKEDPAWNS: "BLOCKEDPAWNS" | "PEOESBLOQUEADOS" > |
+
+	//Tipos de peças
+	
+	<KING: "K" | "k"> |
+	<QUEEN: "Q" | "q" > |
+	<ROOK: "R" | "r" > |
+	<BISHOP: "B" | "b" > |
+	<KNIGHT: "N" | "n" > |
+	<PAWN: "P" | "p" > |
+	<OWNER: "EU" | "ME" | "OPONENTE" | "OPPONENT" > |
+	<FULLOWNER: <OWNER> | "NONE" | "VAZIA" | "ANYONE" | "NINGUEM" > |
+	<WILDCARD: "F" | "f" | "S" | "s" > |
+	<OP_AND : "E" | "AND" > |
+	<OP_OR  : "OU" | "OR" > |
+	<FALSE  : "FALSO" | "FALSE" > |
+	<TRUE: "TRUE" | "VERDADEIRO" > |
+	<DIMENSION: ["a"-"h"] > |
+
+	//Relações / papéis
+	
+	<OP_ATTACK : "=>" | "ATACA" | "ATTACKS" > |
+	<OP_IATTACK: "->" | "INDIRECTATTACK" | "ATACAINDIRETO" > | 
+	<OP_DEFENSE: "=<" | "DEFENDS" | "DEFENDE" > |
+	<OP_IDEFENSE: "-<" | "INDIRECTDEFENSE" | "DEFESAINDIRETA" > | 
+	<OP_MOVE: ">>" | "MOVE" | "MOVES" > | 
+	<OP_BLOCK: "||" | "BLOCKS" | "BLOQUEIA" >  |
+	<OP_RIGHTSIDE: "|>" | "RIGHTOF" | "DIREITADE" > | 
+	<OP_LEFTSIDE: "<|" | "LEFTOF" | "ESQUERDADE" > | 
+	<OP_TOPSIDE: "|^" | "ABOVEOF" | "UPPERSIDE" > | 
+	<OP_BOTTOMSIDE: "|v" | "UNDEROF" | "UNDERSIDE" > | 
+	<OP_SE: "\\>" | "SUDESTE" | "SOUTHEAST" > | 
+	<OP_NW: "<\\" | "NOROESTE" | "NORTHWEST" > |
+	<OP_NE: "/>" | "NORDESTE" | "NORTHEAST" > | 
+	<OP_SW: "</" | "SUDOESTE" | "SOUTHWEST" > | 
+	<OP_PATTACK: ":>" | "POSSIBLEATTACK" | "ATAQUEPOSSIVEL" > | 
+	<OP_PDEFENSE: ":<" | "DEFESAPOSSIVEL" | "POSSIBLEDEFENSE" > |
+	<OP_CHECKMATE: "#>" | "CHECKMATE" | "CHECKMATE" > |
+	<OP_NOT: "NAO" | "NOT" > |
+                   
+    <#SIGNAL : "-" | "+" > |
+    <UINT: ["0"-"9"] (["0"-"9"])* > |
+    <REAL: (<SIGNAL>)?(["0"-"9"])+ "." (["0"-"9"])* > |
+    <TEXT:
+      "\""
+      (   (~["\"","\\","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )*
+      "\"" >
+}
+
+/* IDENTIFIERS */
+
+/** Root production. */
+void Patterns() :
+{}
+{
+  (Pattern())*<EOF>
+}
+
+void Pattern() :
+{Token t;
+ String s;}
+{
+   <PATTERN> t = <TEXT> { pattern.setNome(t.image.substring(1, t.image.length()-1)); }    /* objeto pattern deve ser inicializado antes de acionar o parser e definido na variável pattern */
+   <AUTHOR> <TEXT>
+   <DESCRIPTION> t = <TEXT> { pattern.setDescription(t.image); }
+   <WEIGHT> t = <REAL>       { pattern.setWeight(Double.parseDouble(t.image)); }
+   (<ACTORS> Atores() )?   
+   (<PIECESET> ExclusiveSet() )? 
+   (LOOKAHEAD(2) <FORMAT> | <SCENARIO>) ScenarioShapePattern() 
+    { StringBuilder sb = new StringBuilder();
+      for(ScenarioShape f:pattern.getScenarioMembers()) {
+         f.rightFigSource.addAll(f.rightFig);
+         sb.append(f.toString()).append("\n");
+      }
+      pattern.setScenario(sb.toString());
+    }
+   (<PRECONDITION> s = LogicExpression() {pattern.setPreConditionToJava(s);} )?
+   (<MOVES> Moves() { progMoves = true; } )?
+   (<POSTCONDITION> s = LogicExpression() 
+      { if(!progMoves) { 
+           throw new ParseException("Pós-condições exigem sequência de movimentos previstos/esperados.");
+        }
+        pattern.setPosConditionToJava(s); 
+      } 
+    )?
+   ";"
+}
+
+void Relation() :
+{}
+{
+   (<OP_ATTACK> {scenario.relationType = PatternRelationType.ATTACKS; } | 
+    <OP_DEFENSE> {scenario.relationType = PatternRelationType.DEFENDS;} | 
+    <OP_IATTACK> {scenario.relationType = PatternRelationType.INDIRECTATTACK;} | 
+    <OP_IDEFENSE> {scenario.relationType = PatternRelationType.INDIRECTDEFENSE;} | 
+    <OP_MOVE> {scenario.relationType = PatternRelationType.MOVE;} | 
+    <OP_BLOCK> {scenario.relationType = PatternRelationType.BLOCKS;} |
+    <OP_TOPSIDE> {scenario.relationType = PatternRelationType.UPPERSIDE;} | 
+    <OP_RIGHTSIDE> {scenario.relationType = PatternRelationType.RIGHTSIDE;} | 
+    <OP_LEFTSIDE> {scenario.relationType = PatternRelationType.LEFTSIDE;} | 
+    <OP_BOTTOMSIDE> {scenario.relationType = PatternRelationType.UNDERSIDE;} | 
+    <OP_SE> {scenario.relationType = PatternRelationType.SE;} |
+    <OP_NW> {scenario.relationType = PatternRelationType.NW;} | 
+    <OP_NE> {scenario.relationType = PatternRelationType.NE;} | 
+    <OP_SW> {scenario.relationType = PatternRelationType.SW;} | 
+    <OP_PATTACK> {scenario.relationType = PatternRelationType.POSSIBLEATTACK;} | 
+    <OP_PDEFENSE> {scenario.relationType = PatternRelationType.POSSIBLEDEFENSE;} |
+    <OP_CHECKMATE> {scenario.relationType = PatternRelationType.CHECKMATE;} )
+}             
+
+void Atores() :
+{String t;}
+{
+   t = figura0()
+   {
+      TS simb = ST.get(t);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.Key = t;
+         simb.Category = _FIGURE;
+         ST.put(simb.Key, simb);
+      }
+      scenario = new ScenarioShape();
+      scenario.orIni = false;
+      scenario.orFim = false;
+      scenario.leftFig = t;
+      scenario.leftStatus = figStatus;
+      scenario.relationType = PatternRelationType.DECLARATION;
+      if("FfSs".indexOf(t.substring(0,1)) >= 0) {
+          throw new ParseException("Coringas não devem ser declarados como atores");
+      }
+      if(Character.isUpperCase(t.charAt(0))) 
+      {
+         scenario.leftOwner = ScenarioShape.PieceOwner.MINE;
+      } else if(Character.isLowerCase(t.charAt(0))) 
+      {
+         scenario.leftOwner = ScenarioShape.PieceOwner.YOURS;
+      }
+      pattern.getScenarioMembers().add(scenario);
+   }
+   (","
+    t = figura0()
+       {
+          simb = ST.get(t);
+          if(simb == null) {
+             simb = new TS(); 
+             simb.Key = t;
+             simb.Category = _FIGURE;
+             ST.put(simb.Key, simb);
+          }
+          scenario = new ScenarioShape();
+          scenario.orIni = false;
+          scenario.orFim = false;
+          scenario.leftFig = t;
+          scenario.leftStatus = figStatus;
+          scenario.relationType = PatternRelationType.DECLARATION;
+          if("FfSs".indexOf(t.substring(0,1)) >= 0) {
+              throw new ParseException("Coringas não devem ser declarados como atores");
+          }
+          if(Character.isUpperCase(t.charAt(0))) 
+          {
+             scenario.leftOwner = ScenarioShape.PieceOwner.MINE;
+          } else if(Character.isLowerCase(t.charAt(0))) 
+          {
+             scenario.leftOwner = ScenarioShape.PieceOwner.YOURS;
+          }
+          pattern.getScenarioMembers().add(scenario);
+       }
+   )*
+}
+
+void ScenarioDescription() :
+{String t;}
+{
+   t = Figure1() 
+   {
+      TS simb = ST.get(t);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.Key = t;
+         simb.Category = _FIGURE;
+         simb.Parameters = ORClauseForm?"OR":"";
+         ST.put(simb.Key, simb);
+      }
+      scenario = new ScenarioShape();
+      scenario.orIni = false;
+      scenario.orFim = false;
+      scenario.leftFig = t;
+      scenario.leftStatus = figStatus;
+      if(t.charAt(0) == 'S' || t.charAt(0) == 's') 
+      { 
+         throw new ParseException("Referência coringa <" + t +"> não pode estar isolada ou ao lado esquerdo da relação: \n" 
+                                  + "Linha: " + token.beginLine);
+      } else if(Character.isUpperCase(t.charAt(0))) 
+      {
+         scenario.leftOwner = ScenarioShape.PieceOwner.MINE;
+      } else if(Character.isLowerCase(t.charAt(0))) 
+      {
+         scenario.leftOwner = ScenarioShape.PieceOwner.YOURS;
+      }
+   }
+   ( Relation() {scenario.notRelation = false;} | <OP_NOT> Relation() {scenario.notRelation = true; simb.NotAction = true; })
+   Figure2()
+   {
+     pattern.getScenarioMembers().add(scenario);
+   } 
+}
+
+void ScenarioShapePattern() :
+{Token t;} 
+{
+  (
+    ScenarioDescription() 
+  |
+    "{" 
+      { ORClauseForm = true; }
+      (ScenarioDescription() { scenario.orIni = true; })+ 
+    "}" 
+    {scenario.orFim = true; ORClauseForm = false;} 
+  )+     
+}
+
+String PieceType() :
+{Token t;}
+{
+   t = <KING> { return myPiece(t.image)?"K":"k"; }| 
+   t = <QUEEN> { return myPiece(t.image)?"Q":"q"; }| 
+   t = <BISHOP> { return myPiece(t.image)?"B":"b"; }| 
+   t = <KNIGHT> { return myPiece(t.image)?"N":"n"; }| 
+   t = <ROOK> { return myPiece(t.image)?"R":"r"; }| 
+   t = <PAWN> { return myPiece(t.image)?"P":"p"; } 
+}
+
+String Piece() :
+{Token t;
+ String s;}
+{
+   t = <WILDCARD> { return t.image; } | s = PieceType() { return s; }
+}
+
+String figura0() :
+{ Token t1;
+  String s;
+}
+{
+  s = PieceType() t1 = <UINT> { figStatus = PieceStatus.ANYONE; return s + t1.image; } 
+}
+
+String Figure1() :
+{ Token t1;
+  String s;
+}
+{
+  LOOKAHEAD(2)
+  s = Piece() t1 = <UINT> { figStatus = PieceStatus.ANYONE; return s + t1.image; } 
+| 
+  LOOKAHEAD(2)
+  "<" s = Piece() t1 = <UINT> ">" { figStatus = PieceStatus.PROTECTED; return s + t1.image; } 
+|
+  LOOKAHEAD(2)
+  ">" s = Piece() t1 = <UINT> "<" { figStatus = PieceStatus.UNPROTECTED; return s + t1.image; } 
+}
+
+void Figure2() :
+{ Token t; 
+  String s; 
+  TS simb;
+}
+{ //relaçoes diretas
+   s = Figure1() 
+   {
+      if(s.charAt(0) == 'S' || s.charAt(0) == 's') {
+        owner = ScenarioShape.PieceOwner.ANYONE;
+      } else if(Character.isUpperCase(s.charAt(0))) 
+      { 
+        owner = ScenarioShape.PieceOwner.MINE;
+      } else
+      {
+        owner = ScenarioShape.PieceOwner.YOURS;
+      } 
+      if(scenario.relationType == PatternRelationType.ATTACKS && scenario.leftOwner==owner) {
+         throw new ParseException("Peças do mesmo jogador não podem atacar-se mutuamente." +
+                                  "\nLinha: " + token.beginLine);
+      } else if(scenario.relationType == PatternRelationType.ATTACKS && owner == ScenarioShape.PieceOwner.ANYONE) {
+          throw new ParseException("Uma peça não pode atacar uma casa coringa, somente defender." +
+                                  "\nLinha: " + token.beginLine);
+      } else if(scenario.relationType == PatternRelationType.DEFENDS && owner!=scenario.leftOwner && owner != ScenarioShape.PieceOwner.ANYONE) {
+         throw new ParseException("Peças de um jogador não podem defender peças do outro."
+                                  + "\nLinha: " + token.beginLine);
+      } else if(scenario.relationType != PatternRelationType.MOVE && 
+                scenario.relationType != PatternRelationType.DEFENDS &&
+                scenario.relationType != PatternRelationType.CHECKMATE &&
+                owner==ScenarioShape.PieceOwner.ANYONE) {
+         throw new ParseException("Operador relacional inválido. Utilize o operador de movimento ou defesas direta."
+                                  + "\nLinha: " + token.beginLine);
+      } else if(!scenario.relationType.getDireta()) {
+          {if (true) throw new ParseException("Operador relacional inválido. Utilize operadores diretos."
+                                  + "\u005cnLinha: " + token.beginLine);}
+      } else {
+          boolean jaexiste = false;
+           for(int ix = 0; ix < scenario.rightFig.size(); ix++) {
+              if (s.equals(scenario.rightFig.get(ix))) {
+                  jaexiste = true; break;
+              }
+          }
+          if(s.equals(scenario.leftFig) || jaexiste) {
+              throw new ParseException("Uma figura não pode interagir com ela mesma!");
+          }
+      }
+      simb = ST.get(s);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.Key = s;
+         simb.Category = _FIGURE;
+         simb.Parameters = ORClauseForm?"OR":"";
+         ST.put(simb.Key, simb);
+      }
+      scenario.rightFig.add(s);
+      scenario.rightStatus.add(figStatus);
+      //redefine o owner para operações de consulta
+      if(Character.isUpperCase(s.charAt(0))) 
+      { 
+        owner = ScenarioShape.PieceOwner.MINE;
+      } else
+      {
+        owner = ScenarioShape.PieceOwner.YOURS;
+      } 
+      scenario.rightOwner.add(owner);
+   }  
+| //relações indiretas
+   "(" 
+   s = Figure1() 
+   { 
+      simb = ST.get(s);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.Key = s;
+         simb.Category = _FIGURE;
+         simb.Parameters = ORClauseForm?"OR":"";
+         ST.put(simb.Key, simb);
+      }
+      scenario.rightFig.add(s);
+      scenario.rightStatus.add(figStatus);
+      if(Character.isUpperCase(s.charAt(0))) { 
+         owner = ScenarioShape.PieceOwner.MINE;
+      } else {
+         owner = ScenarioShape.PieceOwner.YOURS;
+      }      
+      scenario.rightOwner.add(owner);
+   } 
+   ("," 
+    s = Figure1() 
+    {
+      simb = ST.get(s);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.Key = s;
+         simb.Category = _FIGURE;
+         simb.Parameters = ORClauseForm?"OR":"";
+         ST.put(simb.Key, simb);
+      }
+      scenario.rightFig.add(s);
+      scenario.rightStatus.add(figStatus);
+      if(s.charAt(0) == 'S' || s.charAt(0) == 's') {
+         owner = ScenarioShape.PieceOwner.ANYONE;
+      } else 
+      if(Character.isUpperCase(s.charAt(0))) { 
+         owner = ScenarioShape.PieceOwner.MINE;
+      } else {
+         owner = ScenarioShape.PieceOwner.YOURS;
+      }
+      scenario.rightOwner.add(owner);
+    })+
+    {    
+      if((scenario.relationType == PatternRelationType.INDIRECTATTACK ||
+          scenario.relationType == PatternRelationType.POSSIBLEATTACK ||
+          scenario.relationType == PatternRelationType.ATTACKS) && 
+          (owner==scenario.leftOwner || owner == ScenarioShape.PieceOwner.ANYONE)) {
+         throw new ParseException("Peças do mesmo jogador não podem atacar-se mutuamente ou coringas S."
+                                  + "\nLinha: " + token.beginLine);
+      } else if((scenario.relationType == PatternRelationType.INDIRECTDEFENSE ||
+                 scenario.relationType == PatternRelationType.POSSIBLEDEFENSE) && 
+                 owner != scenario.leftOwner && 
+                 owner != ScenarioShape.PieceOwner.ANYONE ) {
+         throw new ParseException("O owner da última peça da lista deve ser o mesmo da peça à esquerda ou a peça deve ser um coringa S."
+                                  + "\nLinha: " + token.beginLine);
+      }  else if(scenario.relationType.getDireta()) {
+          {if (true) throw new ParseException("Operador relacional inv\u00e1lido. Utilize operadores indiretos."
+                                  + "\u005cnLinha: " + token.beginLine);}
+      }
+    }    
+    ")"
+}
+
+void Moves() :
+{String arg1 = "", arg2 = "";
+}
+{
+   (
+       arg1 = Figure1() 
+       {
+          TS simb = ST.get(arg1);
+          if(simb == null) {
+             throw new ParseException("A figura [" + arg1 + "] deve estar declarada no scenario/atores do padrão.");
+          } 
+       }
+       ","
+       arg2 = Figure1() 
+       {
+          simb = ST.get(arg2);
+          if(simb == null) {
+             throw new ParseException("A figura [" + arg2 + "] deve estar declarada no scenario/atores do padrão.");
+          } 
+          if(arg2.equals(arg1)) {
+              throw new ParseException("O destino do movimento deve ser diferente da origem");
+          }
+          if(Character.toUpperCase(arg2.charAt(0)) != 'S')
+            if((Character.isUpperCase(arg1.charAt(0)) &&
+                Character.isUpperCase(arg2.charAt(0))) ||
+               (Character.isLowerCase(arg1.charAt(0)) &&
+               Character.isLowerCase(arg2.charAt(0)))) {
+                  throw new ParseException("Movimento sobre peça própria é inválido!");
+            }
+          pattern.getMoves().add(arg1 + "," + arg2); //adiciona a tabela IL de movimentos
+       }
+   )+
+}
+
+String LogicExpression():
+{String s1 = "",s2 = "",s3 = "";}
+{
+  s1 = ANDExpression() ( <OP_OR> {s2 = " || "; } s3 = ANDExpression() {s1 += s2 + s3; } )* 
+  { return s1; }
+}
+
+String ANDExpression():
+{String s = "", s1 = "",s2 = "",s3 = "";}
+{
+   s1 = EqualExpression() { s = s1;  pattern.getPreConditions().add(s1); } 
+   ( <OP_AND> { s2 = " && "; } s3 = EqualExpression() 
+    {
+	   pattern.getPreConditions().add(s3);
+	   s += s2 + s3; 
+    } )*
+   { return s; }
+}
+
+String EqualExpression():
+{String s1 = "",s3 = "";
+ Token s2 = null;
+}
+{
+  s1 = RelationalExpression() ( ( s2 = "=" | s2 = "!=" ) s3 = RelationalExpression() 
+                               {s1 += s2.image=="="?"==" + s3:s2.image + s3; } )*
+  { return s1;  }
+}
+
+String RelationalExpression():
+{String s1 = "",s3 = "";
+ Token s2 = null;
+}
+{
+  s1 = AddExpression() ( (s2 = "<" | s2 = ">" | s2 = "<=" | s2 = ">=" ) s3 = AddExpression()
+                            { s1 += s2.image + s3; })*
+  { return s1; }
+}
+
+String AddExpression():
+{String s1 = "", s3 = "";
+ Token s2 = null;
+}
+{
+   s1 = MulExpression() ( ( s2 = "+" | s2 = "-" ) s3 = MulExpression() 
+                                    { s1 += s2.image + s3; } )* 
+   { return s1; }
+}
+
+String MulExpression():
+{String s1 = "",s3 = "";
+ Token s2 = null;
+}
+{
+  s1 = UnaryExpression() ( ( s2 = "*" | s2 = "/" | s2 = "%" ) s3 = UnaryExpression() 
+                            { s1 += s2.image + s3; } )*
+  { 
+    return s1; 
+  }
+}
+
+String UnaryExpression():
+{ Token t1 = null; 
+  Token t = null;
+  String s1;
+}
+{
+  ( t1 = "+" | t1 = "-" )? ( t = <UINT> | t = <REAL>)
+  { if(t1==null) {return t.image; } else { return t1.image + t.image; } }
+ | t = <TRUE> 
+   { return "true"; }
+ | t = <FALSE>
+  { return "false"; }
+|
+   s1 = BuiltInFunction()
+   {return s1; }
+|
+  "(" s1 = LogicExpression() ")"
+  { return "(" + s1 + ")"; }
+}
+
+/* Funcões prédefinidas */
+
+String BuiltInFunction():
+{ String f = "", args = "";
+  Token arg;}
+  
+//----------------------------------------------------------------
+  
+{ // zero parametros
+    LOOKAHEAD(2)
+   (  <WHITE>              { f = "analise.WHITEPIECES()"; } // bool
+    | <BLACK>               { f = "analise.BLACKPIECES()"; }  // bool
+   ) 
+   
+//----------------------------------------------------------------
+   
+ | // um parâmetro FIGURA 
+  (  <FILE>                { f = "analise.FILEOF"; } // INTEIRO_SEM_SINAL
+   | <RANK>                 { f = "analise.RANKOF"; }  // INTEIRO_SEM_SINAL
+   | <ONEDGE>               { f = "analise.ONEDGE"; }// BOOL
+   | <ONCORNER>               { f = "analise.ONCORNER"; }// BOOL
+   | <MYDEFENSES>         { f = "analise.MYDEFENSES"; } // INTEIRO_SEM_SINAL
+   | <YOURDEFENSES>           { f = "analise.YOURDEFENSES"; }     // INTEIRO_SEM_SINAL
+   | <MYDEFENSESVALUE>    { f = "analise.MYDEFENSESVALUE"; } // REAL
+   | <YOURDEFENSESVALUE>      { f = "analise.YOURDEFENSESVALUE"; } // REAL
+   /* valores relativos de defesas conforme a posição de origem do defensor */
+   | <RELATIVEVALUEOF>         { f = "analise.RELATIVEVALUEOF"; } // REAL
+   | <MYDIRDEFENSES>      { f = "analise.MYDIRDEFENSES"; } // INTEIRO_SEM_SINAL
+   | <YOURDIRDEFENSES>        { f = "analise.YOURDIRDEFENSES"; }     // INTEIRO_SEM_SINAL
+   | <MYRELDEFENSESVALUE> { f = "analise.MYRELDEFENSESVALUE"; } // REAL
+   | <YOURRELDEFENSESVALUE>   { f = "analise.YOURRELDEFENSESVALUE"; } // REAL
+   | <MYDIRDEFENSESVALUE> { f = "analise.MYDIRDEFENSESVALUE"; } // REAL
+   | <YOURDIRDEFENSESVALUE>   { f = "analise.YOURDIRDEFENSESVALUE"; } // REAL
+   | <SENTRY>             { f = "analise.SENTRY"; } // INTEIRO_SEM_SINAL
+   | <RAM>                   { f = "analise.RAM";}  // INTEIRO_SEM_SINAL
+  )"(" args = Args() ")"
+  { return f + "(\"" + args + "\")"; }
+
+//----------------------------------------------------------------  
+  
+ | //um parâmetro - owner/lado da busca/verificação
+    <BLOCKEDPAWNS> "(" arg = <OWNER> ")" 
+    { f = "analise.ISPAWNSBLOCKED(\"" + arg.image + "\")"; 
+      return f; 
+    } // bool true se todos os peões não conseguem avançar
+	
+//----------------------------------------------------------------
+
+ | //um parametro : ator ou tipo da peça
+     <SQUARECOLOR>                { f = "analise.SQUARECOLOROF"; } 
+       "(" (LOOKAHEAD(2) args = Args() | args = Piece()) ")" //INTEIRO_SEM_SINAL
+    { return f + "(\"" + args + "\")"; }
+ | 
+    <VALUE>                  { f = "analise.VALUEOF"; }  // REAL
+    "(" (LOOKAHEAD(2) args = Args() | args = PieceType()) ")"
+    { return f + "(\"" + args + "\")"; }
+ |  
+    <MOVESOF>           { f = "analise.MOVESOF"; } 
+       "(" (LOOKAHEAD(2) args = Args() | args = PieceType()) ")" //INTEIRO_SEM_SINAL
+    { return f + "(\"" + args + "\")"; }
+ |  
+    <SAFEMOVESOF>    { f = "analise.SAFEMOVESOF"; } 
+      "(" (LOOKAHEAD(2) args = Args() | args = PieceType()) ")" // INTEIRO_SEM_SINAL
+    { return f + "(\"" + args + "\")"; } 
+
+//---------------------------------------------------------------	
+	
+ | //dois parametros FIGURA e DONO
+	( 
+	  <DEFENSES> { f = "analise.DEFENSESOF";}                     | 
+	  <DEFENSESVALUE> { f = "analise.DEFENSESVALUEOF";}           |
+	  <DIRECTDEFENSES> { f = "analise.DIRECTDEFENSESOF"; }        |
+	  <DIRDEFENSESVALUE> { f = "analise.DIRECTDEFENSESVALUEOF"; } |
+	  <RELDFENSESVALUE> { f = "analise.RELDEFENSESVALUEOF"; } 
+	)
+	args = OwnerArgs()
+	{return f + args; }
+  
+ | //dois parametros FIGURA e DONO com ANYONE/NONE
+	<SQUAREOWNER> { f = "analise.SQUAREOWNER"; }
+	args = SquareOwnerArgs()
+	{ return f + args; }
+//---------------------------------------------------------------
+ 
+ | //dois parametros FIGURA e TIPO
+    ( <TYPEOF>                 { f = "analise.TYPEOF"; }  |
+      <PIECESDEFENDING>  	   { f = "analise.PIECESDEFENDING"; } 
+	)
+	args = TypeArgs() 
+    { return f + args; }
+ | 
+    <ISINFILE>         { f = "analise.EXISTINFILE"; } 
+	args = FileExistArgs() 
+    { return f + args; } // BOOL
+ |
+    <INSINRANK>          { f = "analise.EXISTINRANK"; } 
+	args = RankExistArgs()
+    { return f + args; } // BOOL
+ | 
+    ( <KINGPATH> { f = "analise.KINGPATHTO";   } // BOOL
+    | <KINGOPPOSITION>  { f = "analise.KINGOPPOSITION";  } // bool
+    | <RANKDISTANCE> { f = "analise.RANKDISTANCE"; } // INTEIRO_SEM_SINAL
+    | <FILEDISTANCE> { f = "analise.FILEDISTANCE"; }
+    | <MANDISTANCE> { f = "analise.MANHATTANDISTANCE"; }
+    | <MAXDISTANCE> { f = "analise.MAXDISTANCE"; }
+    | <MINDISTANCE> { f = "analise.MINDISTANCE"; }
+    | <SQUARERULE>   { f = "analise.INTHESQUARE";   } // BOOL
+	| <WEDGES>       { f = "analise.WEDGESBETWEEN"; } 
+    ) 
+    args = DistanceArgs() 
+    { return f + args; }
+  | <CHECKPATTERN> "(" args = PatternArgs() ")" 
+    { f = "analise.EXISTPATTERN(\"" + args + "\")";
+      return f;
+    }
+}
+
+
+String ExclusiveSet():
+{String t = "", s = "";}
+{
+  (s = PieceType() { pattern.getExclusiveSet().add(s.charAt(0)); t = t + s; } )+
+  {
+    if(pattern.getExclusiveSet().size() < 3) {
+          throw new ParseException("Três peças no mínimo devem compor o conjunto exclusivo.");
+    }
+    return t;
+  }  
+}
+
+String PatternArgs():
+{ Token t;
+  Token d;
+}
+{
+   t = <TEXT>
+   ","
+   d = <OWNER>
+   {
+    pattern.setRecursiveSearch(d.image.startsWith("OP"));
+    return t.image.substring(1,t.image.length()-1) + "," + d.image;
+   }
+}
+
+String Args():
+{ String s; }
+{
+   s = Figure1() 
+   {
+      TS simb = ST.get(s);
+      if(simb == null) 
+      {
+         throw new ParseException("A figura [" + s + "] deve estar declarada no scenario do padrão.");
+      }
+      return s;
+   }  
+}
+
+String OwnerArgs():
+{String arg1 = "", arg2 = ""; 
+ Token t = null;}
+{
+   "(" 
+      arg1 = Figure1()
+   "," 
+      t = <OWNER> { arg2 = t.image; }
+   ")" 
+   { return "(\"" + arg1 + "," + arg2 + "\")"; }
+}
+
+String SquareOwnerArgs():
+{String arg1 = "", arg2 = ""; 
+ Token t = null;}
+{
+   "(" 
+      arg1 = Figure1()
+   "," 
+      t = <FULLOWNER>  { arg2 = t.image; }
+   ")" 
+   { return "(\"" + arg1 + "," + arg2 + "\")"; }
+}
+
+String FileExistArgs():
+{String arg1 = "", arg2 = "", arg3 = ""; 
+ Token t = null;}
+{
+   "(" 
+      arg1 = Piece() 
+   "," 
+      ( 
+        t = <UINT> 
+        { arg2 = t.image; }
+      | 
+        <FILE> "(" arg3 = Args() ")" 
+        { arg2 = "analise.COLUNADE(" + arg3 + ")";} 
+      ) 
+   ")" 
+   { return "(\"" + arg1 + "," + arg2 + "\")"; }
+}
+
+String RankExistArgs():
+{String arg1 = "", arg2 = "", arg3 = ""; 
+ Token t = null;}
+{
+   "(" 
+      arg1 = Piece() 
+   "," 
+      ( t = <UINT> 
+        { arg2 = t.image; }
+      | 
+        <RANK> "(" arg3 = Args() ")" 
+        { arg2 = "analise.COLUNADE(" + arg3 + ")"; }
+      ) 
+   ")" 
+   {return "(\"" + arg1 + "," + arg2 + "\")"; }
+}
+
+String TypeArgs():
+{String arg1 = "", arg2 = "";}
+{
+   "(" 
+   arg1 = Figure1() 
+   {
+      TS simb = ST.get(arg1);
+      if(simb == null) {
+         throw new ParseException("A figura [" + arg1 + "] deve estar declarada no scenario do padrão.");
+      } 
+   }
+   "," 
+   arg2 = PieceType() 
+   {
+      simb = ST.get(arg2);
+      if(simb == null) {
+         simb = new TS(); 
+         simb.Key = arg2;
+         simb.Category = _FUNCTION;
+         ST.put(simb.Key, simb);
+      }
+   }
+   ")" 
+   
+   {return "(\"" + arg1 + "," + arg2 + "\")"; }
+}
+
+String DistanceArgs():
+{String arg1 = "", arg2 = "";}
+{
+   "(" 
+   arg1 = Figure1() 
+   {
+      TS simb = ST.get(arg1);
+      if(simb == null) {
+         throw new ParseException("A figura [" + arg1 + "] deve estar declarada no scenario do padrão.");
+      } 
+   }
+   "," 
+   arg2 = Figure1() 
+   {
+      simb = ST.get(arg2);
+      if(simb == null) {
+         throw new ParseException("A figura [" + arg2 + "] deve estar declarada no scenario do padrão.");
+      } 
+   }
+   ")"
+   {return "(\"" + arg1 + "," + arg2 + "\")"; }
+}
+
+

@@ -1,0 +1,50 @@
+Reunião Direne por Skype - 05/10/2016
+
+1) Experimentos com enxadristas - devagar (Valério vai me ajudar a montar padrões relevantes)
+
+2) Cálculo estratégico baseado em conhecimento de padrões
+   
+   - Ideias para o algoritmo:
+       
+       Se o formato do padrão foi encontrado na posição em análise então
+          Se as condições opcionais do padrão conferem 
+             Incrementar o valor da posição para o máximo
+          Fim se
+          Multiplicar o valor por 100% do peso do padrão
+       Fim se
+       Contador = 0
+       Se o material necessário para o formato ocorrer está presente
+           Para cada elemento (linha) do formato
+               Se o elemento encontra-se formado na posição
+                 Contador++
+               Fim se
+           Fim para
+       Fim Se
+       
+       Multiplicar o valor da posição por 1 + (Contador / Número de elementos do formato * Peso)
+       
+ 3) 
+ 
+ -------
+
+END_NO_REASON=0,
+END_WHITE_MATE=1,
+END_BLACK_MATE=2,
+END_STALEMATE=3,
+END_WHITE_TIME_OVER=4,
+END_BLACK_TIME_OVER=5,
+END_WHITE_RESIGNED=6,
+END_BLACK_RESIGNED=7,
+END_DRAW_AGREEMENT=8,
+END_DRAW_REPETITION=9,
+END_DRAW_50_MOVES=10,
+END_DRAW_IMPOSSIBLE_MATE=11,
+END_DRAW_TIME_OVER=12,
+END_CANCELED_AGREEMENT=13,
+END_CANCELED_TIMED_OUT=14,
+END_ADJOURNED=14,
+END_ADJOURNED_AGREEMENT=15,
+END_ADJOURNED_SHUTDOWN=16,
+END_WHITE_WO=17,
+END_BLACK_WO=18,
+END_BOTH_WO=19 
