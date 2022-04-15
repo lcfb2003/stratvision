@@ -6,3 +6,5 @@ The StratVision has the following modules:
 2. PATLAN Interpreter;
 3. PATLAN Editor;
 4. StratVision search module - used to find the pattern described with PATLAN in chess game databases or specific positions.
+
+UPDATE: StratVision is under a rebuild from scratch in order to be more user friendly and to get best performance.
